@@ -25,6 +25,7 @@ Commands:
 
 Options:
   -o, --out [file]         Output directory for build (defaults to dist)
+  -f, --filename [file]    Output filename (defaults to index)
   -m, --minify             Minify output
   -C, --no-cache           Skip build cache population
   -s, --source-map         Generate source map
@@ -151,6 +152,8 @@ async function runCmd (argv, stdout, stderr) {
       "-e": "--external",
       "--out": String,
       "-o": "--out",
+      "--filename": String,
+      "-f": "--filename",
       "--minify": Boolean,
       "-m": "--minify",
       "--source-map": Boolean,
@@ -191,7 +194,7 @@ async function runCmd (argv, stdout, stderr) {
   let outDir = args["--out"];
   const quiet = args["--quiet"];
   const statsOutFile = args["--stats-out"];
-
+  const filename = args["--filename"];
 
   switch (args._[0]) {
     case "cache":
@@ -293,8 +296,8 @@ async function runCmd (argv, stdout, stderr) {
             new Promise((resolve, reject) => unlink(file, err => err ? reject(err) : resolve())
           ))
         );
-        writeFileSync(`${outDir}/index${ext}`, code, { mode: code.match(shebangRegEx) ? 0o777 : 0o666 });
-        if (map) writeFileSync(`${outDir}/index${ext}.map`, map);
+        writeFileSync(`${outDir}/${filename || "index"}${ext}`, code, { mode: code.match(shebangRegEx) ? 0o777 : 0o666 });
+        if (map) writeFileSync(`${outDir}/${filename || "index"}${ext}.map`, map);
 
         for (const asset of Object.keys(assets)) {
           const assetPath = outDir + "/" + asset;
@@ -340,7 +343,7 @@ async function runCmd (argv, stdout, stderr) {
           } while (nodeModulesDir = resolve(nodeModulesDir, "../../node_modules"));
           if (nodeModulesDir)
             symlinkSync(nodeModulesDir, outDir + "/node_modules", "junction");
-          ps = require("child_process").fork(`${outDir}/index${ext}`, {
+          ps = require("child_process").fork(`${outDir}/${filename || "index"}${ext}`, {
             stdio: api ? 'pipe' : 'inherit'
           });
           if (api) {
